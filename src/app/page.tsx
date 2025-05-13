@@ -2,16 +2,55 @@ import WordDisplay from '@/components/lexidaily/WordDisplay';
 import PageControls from '@/components/lexidaily/PageControls';
 import { generateExampleSentences } from '@/ai/flows/generate-example-sentences';
 import { BookOpenText } from 'lucide-react';
+import { getDayOfYear } from 'date-fns';
 
-// Mocked list of daily words. In a real app, this would come from an external API.
-const MOCK_DAILY_WORDS: string[] = ["ephemeral", "ubiquitous", "serendipity", "mellifluous", "labyrinthine", "eloquent", "pernicious", "auspicious", "cacophony", "epiphany"];
+// Expanded list of daily words. In a real app, this would come from a dynamic source.
+const MOCK_DAILY_WORDS: string[] = [
+  "ephemeral", "ubiquitous", "serendipity", "mellifluous", "labyrinthine", 
+  "eloquent", "pernicious", "auspicious", "cacophony", "epiphany",
+  "quintessential", "plethora", "surreptitious", "vicarious", "anachronistic",
+  "benevolent", "camaraderie", "deleterious", "ebullient", "fastidious",
+  "gregarious", "harbinger", "iconoclast", "juxtaposition", "kudos",
+  "loquacious", "maverick", "nefarious", "obsequious", "paradigm",
+  "recalcitrant", "sagacious", "tenacious", "unctuous", "veritable",
+  "whimsical", "zenith", "alacrity", "bombastic", "capricious",
+  "diffident", "erudite", "flummox", "galvanize", "histrionic",
+  "innocuous", "judicious", "myriad", "nonchalant", "ostentatious"
+];
 
 async function fetchDailyWords(): Promise<string[]> {
-  // Simulate an API call to fetch daily words
-  console.log("Fetching daily words...");
+  console.log("Fetching daily words based on IST date...");
   await new Promise(resolve => setTimeout(resolve, 200)); // Simulate a short delay
-  // Ensure at least 10 words are returned
-  return MOCK_DAILY_WORDS.slice(0, Math.max(10, MOCK_DAILY_WORDS.length));
+
+  const now = new Date(); // Server's current time (usually UTC on hosting platforms)
+  
+  // IST is UTC+5:30
+  const istOffsetMilliseconds = 5.5 * 60 * 60 * 1000;
+  // Calculate IST by creating a new Date object representing the UTC time, then adjusting.
+  // Server time is assumed UTC. If server has a local timezone, this needs adjustment.
+  // For a robust solution, date-fns-tz or similar timezone library would be better.
+  // getTime() gives UTC milliseconds. Add IST offset.
+  const istTime = new Date(now.getTime() + istOffsetMilliseconds);
+  
+  const dayOfYearInIST = getDayOfYear(istTime); // Get day of the year (1-366) in IST
+
+  const wordsPerDay = 10;
+  const totalWords = MOCK_DAILY_WORDS.length;
+
+  if (totalWords === 0) {
+    return [];
+  }
+  
+  // Calculate a starting index that cycles through the MOCK_DAILY_WORDS list.
+  // (dayOfYearInIST - 1) to make it 0-indexed for calculations.
+  const startIndex = ((dayOfYearInIST - 1) * wordsPerDay) % totalWords;
+
+  const selectedWords: string[] = [];
+  for (let i = 0; i < wordsPerDay; i++) {
+    selectedWords.push(MOCK_DAILY_WORDS[(startIndex + i) % totalWords]);
+  }
+  
+  return selectedWords;
 }
 
 export interface WordData {
