@@ -1,4 +1,3 @@
-
 "use client"; 
 
 import * as React from "react";
@@ -45,7 +44,12 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
       const loadVoices = () => {
         const voices = window.speechSynthesis.getVoices();
         if (voices.length === 0) {
-          window.speechSynthesis.onvoiceschanged = loadVoices;
+          // Ensure onvoiceschanged is attached only once or handled correctly
+          const voiceChangeHandler = () => {
+            // Voices loaded, can remove listener if desired, or just let it be.
+            // For simplicity, we'll leave it, but in complex apps, manage listeners carefully.
+          };
+          window.speechSynthesis.onvoiceschanged = voiceChangeHandler;
         }
       };
       loadVoices();
@@ -114,11 +118,17 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
           description: `"${word}" has been shared.`,
         });
       } catch (error) {
-        console.error("Error sharing:", error);
         const domError = error as DOMException;
         // If user cancelled the share dialog (AbortError), do nothing.
-        // Otherwise, attempt to fall back to copying to clipboard.
-        if (domError?.name !== 'AbortError') {
+        if (domError?.name === 'AbortError') {
+          // User cancelled share. No action needed from our side.
+        } else {
+          // For NotAllowedError (permission denied) or other errors, attempt fallback.
+          // Log only if it's an unexpected error, not a standard permission denial or cancellation.
+          if (domError?.name !== 'NotAllowedError') {
+            console.error("Error sharing via navigator.share:", error);
+          }
+          // Always attempt fallback if not AbortError.
           await fallbackCopyToClipboard(domError?.name);
         }
       }
@@ -191,3 +201,4 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
     </Card>
   );
 }
+
