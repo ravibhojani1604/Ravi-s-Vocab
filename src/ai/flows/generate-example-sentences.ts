@@ -66,6 +66,26 @@ const prompt = ai.definePrompt({
   }
   Ensure the output strictly follows this JSON structure for the 'wordDetails' array.
   `,
+  config: {
+    safetySettings: [
+      {
+        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+        threshold: 'BLOCK_ONLY_HIGH', // Be less restrictive for dangerous content if words are innocuous
+      },
+      {
+        category: 'HARM_CATEGORY_HATE_SPEECH',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+      {
+        category: 'HARM_CATEGORY_HARASSMENT',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+      {
+        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+    ],
+  },
 });
 
 const generateExampleSentencesFlow = ai.defineFlow(
@@ -75,10 +95,33 @@ const generateExampleSentencesFlow = ai.defineFlow(
     outputSchema: GenerateExampleSentencesOutputSchema,
   },
   async input => {
-    // Ensure the input words are passed to the prompt.
-    // The prompt is designed to iterate over input.words internally.
-    const {output} = await prompt(input);
-    return output!;
+    console.log('[AI Flow] Received input for generateExampleSentencesFlow:', input);
+    try {
+      const {output} = await prompt(input);
+      console.log('[AI Flow] Successfully generated output:', output);
+      if (!output || !output.wordDetails) {
+        console.warn('[AI Flow] Output is missing or wordDetails is not present. Output:', output);
+        // Return a structure that matches the schema but indicates failure if needed
+        return { wordDetails: input.words.map(w => ({ 
+            word: w, 
+            sentence: "AI generation failed or returned no details.", 
+            hindiMeaning: "AI generation failed or returned no details.", 
+            pronunciation: "AI generation failed or returned no details." 
+        }))};
+      }
+      return output;
+    } catch (error) {
+      console.error('[AI Flow] Error in generateExampleSentencesFlow:', error);
+      // Propagate the error or return a structured error response
+      // For now, returning a fallback that matches the schema
+      return { 
+        wordDetails: input.words.map(w => ({ 
+            word: w, 
+            sentence: "Error during AI generation.", 
+            hindiMeaning: "Error during AI generation.", 
+            pronunciation: "Error during AI generation." 
+        }))
+      };
+    }
   }
 );
-
