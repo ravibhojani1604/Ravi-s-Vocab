@@ -1,4 +1,5 @@
 import WordDisplay from '@/components/lexidaily/WordDisplay';
+import PageControls from '@/components/lexidaily/PageControls';
 import { generateExampleSentences } from '@/ai/flows/generate-example-sentences';
 import { BookOpenText } from 'lucide-react';
 
@@ -13,7 +14,7 @@ async function fetchDailyWords(): Promise<string[]> {
   return MOCK_DAILY_WORDS.slice(0, Math.max(10, MOCK_DAILY_WORDS.length));
 }
 
-interface WordData {
+export interface WordData {
   word: string;
   sentence: string;
   hindiMeaning: string;
@@ -67,6 +68,10 @@ export default async function HomePage() {
             Expand your vocabulary, one day at a time, with Hindi meanings and pronunciations.
           </p>
         </header>
+
+        {wordDataList.length > 0 && (
+          <PageControls wordDataList={wordDataList} pageTitle="LexiDaily - Today's Words" />
+        )}
 
         <main className="w-full max-w-xl space-y-6">
           <h2 className="text-3xl font-semibold text-center text-foreground mb-8">
