@@ -7,6 +7,11 @@ import { Download } from "lucide-react";
 import jsPDF from 'jspdf';
 import { useToast } from "@/hooks/use-toast";
 
+// Ensure Noto Sans Devanagari font is embedded or available
+// For jsPDF, you might need to load the font explicitly if it's not a standard one.
+// This example assumes the font is either standard or handled by the browser/OS PDF viewer.
+// For true embedding, you'd convert .ttf to a jsPDF font format.
+
 interface PageControlsProps {
   wordDataList: WordData[];
   pageTitle: string;
@@ -15,7 +20,7 @@ interface PageControlsProps {
 export default function PageControls({ wordDataList, pageTitle }: PageControlsProps) {
   const { toast } = useToast();
 
-  const handleExportToPdf = () => {
+  const handleExportToPdf = async () => {
     if (wordDataList.length === 0) {
       toast({
         title: "No words to export",
@@ -32,10 +37,10 @@ export default function PageControls({ wordDataList, pageTitle }: PageControlsPr
       const lineHeight = 7; 
       const margin = 20; 
       let yPos = margin; 
-      const defaultFont = 'helvetica'; // jsPDF's default font
-      
+      const defaultFont = 'helvetica'; // Default font
+
       // Page Title
-      doc.setFont(defaultFont, 'normal');
+      doc.setFont(defaultFont, 'normal'); // Use default font for title
       doc.setFontSize(18);
       doc.text(pageTitle, pageWidth / 2, yPos, { align: 'center' });
       yPos += lineHeight * 2; 
@@ -46,13 +51,15 @@ export default function PageControls({ wordDataList, pageTitle }: PageControlsPr
         // Calculate height of the current entry block to check for page break
         let blockHeight = 0;
         
+        // Word (Bold, Default Font)
         doc.setFont(defaultFont, 'bold');
         blockHeight += doc.splitTextToSize(data.word, pageWidth - margin * 2).length * lineHeight;
 
+        // Sentence (Normal, Default Font)
         doc.setFont(defaultFont, 'normal');
         blockHeight += doc.splitTextToSize(`Sentence: ${data.sentence}`, pageWidth - margin * 2).length * lineHeight;
         
-        doc.setFont(defaultFont, 'normal');
+        // Pronunciation (Normal, Default Font)
         blockHeight += doc.splitTextToSize(`Pronunciation: ${data.pronunciation}`, pageWidth - margin * 2).length * lineHeight;
         
         blockHeight += lineHeight; // Spacing after the entry
@@ -68,12 +75,12 @@ export default function PageControls({ wordDataList, pageTitle }: PageControlsPr
           doc.setFontSize(12);
         }
 
-        // Draw Word
+        // Draw Word (Bold, Default Font)
         doc.setFont(defaultFont, 'bold');
         doc.text(data.word, margin, yPos);
         yPos += doc.splitTextToSize(data.word, pageWidth - margin * 2).length * lineHeight;
 
-        // Draw Sentence
+        // Draw Sentence (Normal, Default Font)
         doc.setFont(defaultFont, 'normal');
         const sentenceLines = doc.splitTextToSize(`Sentence: ${data.sentence}`, pageWidth - margin * 2);
         sentenceLines.forEach(line => {
@@ -81,7 +88,7 @@ export default function PageControls({ wordDataList, pageTitle }: PageControlsPr
           yPos += lineHeight;
         });
         
-        // Draw Pronunciation
+        // Draw Pronunciation (Normal, Default Font)
         const pronunciationLines = doc.splitTextToSize(`Pronunciation: ${data.pronunciation}`, pageWidth - margin * 2);
         pronunciationLines.forEach(line => {
           doc.text(line, margin, yPos);
@@ -91,7 +98,7 @@ export default function PageControls({ wordDataList, pageTitle }: PageControlsPr
         yPos += lineHeight; // Add spacing after the entry
       });
 
-      doc.save("lexidaily_words.pdf");
+      doc.save("ravis_vocab_words.pdf");
       toast({
         title: "PDF Exported",
         description: `Your words have been exported.`,
@@ -116,4 +123,3 @@ export default function PageControls({ wordDataList, pageTitle }: PageControlsPr
     </div>
   );
 }
-

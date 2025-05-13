@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'LexiDaily',
+  title: "Ravi's Vocab",
   description: 'Expand your vocabulary daily with AI-generated examples.',
 };
 

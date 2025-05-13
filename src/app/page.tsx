@@ -1,5 +1,5 @@
-import WordDisplay from '@/components/lexidaily/WordDisplay';
-import PageControls from '@/components/lexidaily/PageControls';
+import WordDisplay from '@/components/ravisvocab/WordDisplay';
+import PageControls from '@/components/ravisvocab/PageControls';
 import { generateExampleSentences } from '@/ai/flows/generate-example-sentences';
 import { BookOpenText } from 'lucide-react';
 import { getDayOfYear } from 'date-fns';
@@ -101,7 +101,7 @@ export default async function HomePage() {
         <header className="w-full max-w-3xl mt-8 mb-12 text-center">
           <div className="flex items-center justify-center mb-4">
             <BookOpenText className="h-12 w-12 text-primary mr-3" aria-hidden="true" />
-            <h1 className="text-5xl font-extrabold tracking-tight text-primary">LexiDaily</h1>
+            <h1 className="text-5xl font-extrabold tracking-tight text-primary">Ravi's Vocab</h1>
           </div>
           <p className="text-xl text-muted-foreground">
             Expand your vocabulary, one day at a time, with Hindi meanings and pronunciations.
@@ -109,7 +109,7 @@ export default async function HomePage() {
         </header>
 
         {wordDataList.length > 0 && (
-          <PageControls wordDataList={wordDataList} pageTitle="LexiDaily - Today's Words" />
+          <PageControls wordDataList={wordDataList} pageTitle="Ravi's Vocab - Today's Words" />
         )}
 
         <main className="w-full max-w-xl space-y-6">
@@ -140,7 +140,7 @@ export default async function HomePage() {
 
         <footer className="w-full max-w-3xl mt-16 pt-8 border-t border-border text-center">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} LexiDaily. AI-enhanced learning.
+            &copy; {new Date().getFullYear()} Ravi's Vocab. AI-enhanced learning.
           </p>
         </footer>
       </div>
