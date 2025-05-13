@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { WordData } from '@/app/page';
@@ -35,7 +36,23 @@ export default function PageControls({ wordDataList, pageTitle }: PageControlsPr
       // Page Title
       doc.setFontSize(18);
       doc.text(pageTitle, pageWidth / 2, yPos, { align: 'center' });
-      yPos += lineHeight * 3; // Space after title
+      yPos += lineHeight * 2; 
+
+      // Disclaimer for Hindi characters
+      doc.setFontSize(10);
+      doc.setTextColor(100); // Gray color for the note
+      const hindiNote = "Note: Hindi characters may not display correctly in this PDF due to standard font limitations. For accurate rendering, a system with Devanagari font support or PDF software with embedded font capabilities is recommended.";
+      const splitHindiNote = doc.splitTextToSize(hindiNote, pageWidth - margin * 2);
+      splitHindiNote.forEach(line => {
+        if (yPos + lineHeight > pageHeight - margin) {
+            doc.addPage();
+            yPos = margin;
+        }
+        doc.text(line, margin, yPos);
+        yPos += lineHeight;
+      });
+      yPos += lineHeight; // Extra space after the note
+      doc.setTextColor(0); // Reset text color to black
 
       doc.setFontSize(12); // Reset to content font size
 
@@ -51,7 +68,8 @@ export default function PageControls({ wordDataList, pageTitle }: PageControlsPr
         sentenceLines.forEach(line => linesForEntry.push({ text: line, fontStyle: 'normal'}));
         
         // Hindi Meaning
-        // Note: Hindi text might not render correctly without custom fonts embedded in jsPDF.
+        // jsPDF has limited support for Unicode characters like Hindi without embedding custom fonts.
+        // The text below might not render correctly.
         const hindiMeaningLines = doc.splitTextToSize(`Hindi Meaning: ${data.hindiMeaning}`, pageWidth - margin * 2);
         hindiMeaningLines.forEach(line => linesForEntry.push({ text: line, fontStyle: 'normal'}));
 
@@ -69,7 +87,7 @@ export default function PageControls({ wordDataList, pageTitle }: PageControlsPr
           // Optional: Add continuation title to new page
           doc.setFontSize(18);
           doc.text(pageTitle + " (cont.)", pageWidth / 2, yPos, { align: 'center' });
-          yPos += lineHeight * 3;
+          yPos += lineHeight * 2;
           doc.setFontSize(12);
         }
 
@@ -85,7 +103,7 @@ export default function PageControls({ wordDataList, pageTitle }: PageControlsPr
       doc.save("lexidaily_words.pdf");
       toast({
         title: "PDF Exported",
-        description: "Your words have been successfully exported to PDF.",
+        description: "Your words have been exported. Note: Hindi characters may not display correctly without appropriate font support.",
       });
     } catch (error) {
       console.error("Failed to generate PDF:", error);
@@ -106,3 +124,4 @@ export default function PageControls({ wordDataList, pageTitle }: PageControlsPr
     </div>
   );
 }
+
