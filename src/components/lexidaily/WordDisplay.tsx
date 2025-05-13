@@ -4,7 +4,7 @@
 import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Languages, Volume2, Share2 } from "lucide-react";
+import { Languages, Volume2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface WordDisplayProps {
@@ -51,8 +51,6 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
           // This event listener will be called when voices are loaded
           window.speechSynthesis.onvoiceschanged = () => {
             // Voices loaded, no specific action needed here other than allowing future `getVoices()` calls to succeed
-            // Potentially, you could re-trigger something if needed, but for this simple case, 
-            // the next call to handleSpeak will benefit.
           };
         }
       };
@@ -66,99 +64,6 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
       }
     }
   }, []);
-
-  const fallbackCopyToClipboard = async (shareErrorName?: string) => {
-    const shareData = { // Define shareData here as it's used in this scope
-      title: `LexiDaily Word: ${word}`,
-      text: `Word: ${word}\nExample: ${exampleSentence}\nHindi Meaning: ${hindiMeaning}\nPronunciation: ${pronunciation}\n\nLearn more with LexiDaily!`,
-    };
-
-    try {
-      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-        await navigator.clipboard.writeText(shareData.text);
-        if (shareErrorName) { 
-          toast({
-            title: shareErrorName === 'NotAllowedError' ? "Sharing Permission Denied" : "Sharing Failed",
-            description: "Word details have been copied to your clipboard instead.",
-          });
-        } else { 
-          toast({
-            title: "Copied to clipboard!",
-            description: "Sharing is not supported, so the word details have been copied.",
-          });
-        }
-      } else {
-        let descriptionText = "";
-        if (shareErrorName) {
-          if (shareErrorName === 'NotAllowedError') {
-            descriptionText = "Sharing permission was denied. Copy to clipboard is also not available in your browser. Please try copying manually.";
-          } else {
-            descriptionText = "Sharing failed. Copy to clipboard is also not available in your browser. Please try copying manually.";
-          }
-        } else {
-          descriptionText = "Web Share API and Clipboard API are not available in your browser. Please try copying manually.";
-        }
-        toast({
-          title: "Action Unavailable",
-          description: descriptionText,
-          variant: "destructive",
-        });
-      }
-    } catch (copyError: any) {
-      console.error("Error copying to clipboard:", copyError);
-      let errorTitle = "Copy Failed";
-      let errorDescription = "Could not copy word details to clipboard. Please try copying manually.";
-
-      if (copyError instanceof DOMException) {
-        if (copyError.message && copyError.message.toLowerCase().includes("permissions policy")) {
-          errorTitle = "Clipboard Blocked by Policy";
-          errorDescription = "Clipboard access is blocked by your browser's permissions policy. This often occurs on non-secure (HTTP) pages or due to specific site configurations. Please try copying manually.";
-        } else if (copyError.name === 'NotAllowedError') {
-          errorTitle = "Clipboard Access Denied";
-          errorDescription = "Permission to access the clipboard was denied by you or your browser. Please check your browser settings or try copying manually.";
-        } else if (copyError.name === 'SecurityError') {
-           errorTitle = "Clipboard Security Error";
-           errorDescription = "Clipboard access is blocked due to a security issue (e.g., page not served over HTTPS). Please try copying manually.";
-        }
-      }
-      
-      toast({
-        title: errorTitle,
-        description: errorDescription,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleShare = async () => {
-    const shareData = {
-      title: `LexiDaily Word: ${word}`,
-      text: `Word: ${word}\nExample: ${exampleSentence}\nHindi Meaning: ${hindiMeaning}\nPronunciation: ${pronunciation}\n\nLearn more with LexiDaily!`,
-    };
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-        toast({
-          title: "Shared successfully!",
-          description: `"${word}" has been shared.`,
-        });
-      } catch (error) {
-        const domError = error as DOMException;
-        if (domError?.name === 'AbortError') {
-          // User cancelled share. No action needed.
-        } else {
-          if (domError?.name !== 'NotAllowedError') { 
-            console.error("Error sharing via navigator.share:", error);
-          }
-          await fallbackCopyToClipboard(domError?.name);
-        }
-      }
-    } else {
-      await fallbackCopyToClipboard();
-    }
-  };
-
 
   return (
     <Card className="w-full shadow-lg rounded-xl overflow-hidden bg-card hover:shadow-xl transition-shadow duration-300 ease-in-out">
@@ -174,15 +79,6 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
               className="text-accent hover:text-accent-foreground hover:bg-accent/10 rounded-full p-2"
             >
               <Volume2 className="h-5 w-5 sm:h-6 sm:w-6" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleShare} 
-              aria-label={`Share this word: ${word}`}
-              className="text-accent hover:text-accent-foreground hover:bg-accent/10 rounded-full p-2"
-            >
-              <Share2 className="h-5 w-5 sm:h-6 sm:w-6" />
             </Button>
           </div>
         </div>
@@ -222,4 +118,3 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
     </Card>
   );
 }
-

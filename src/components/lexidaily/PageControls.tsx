@@ -7,6 +7,12 @@ import { Download } from "lucide-react";
 import jsPDF from 'jspdf';
 import { useToast } from "@/hooks/use-toast";
 
+// IMPORTANT: Replace this with the actual Base64 encoded string of NotoSansDevanagari-Regular.ttf
+// You can use an online converter or a local script to convert the .ttf file to Base64.
+// For example, in Node.js: fs.readFileSync('path/to/NotoSansDevanagari-Regular.ttf').toString('base64');
+// This string will be very long.
+const notoSansDevanagariBase64 = ""; // Placeholder - MUST BE REPLACED
+
 interface PageControlsProps {
   wordDataList: WordData[];
   pageTitle: string;
@@ -29,81 +35,122 @@ export default function PageControls({ wordDataList, pageTitle }: PageControlsPr
       const doc = new jsPDF();
       const pageHeight = doc.internal.pageSize.height;
       const pageWidth = doc.internal.pageSize.width;
-      const lineHeight = 7; // Approximate line height for font size 12 in points
-      const margin = 20; // Page margin in points
-      let yPos = margin; // Current Y position for drawing text
+      const lineHeight = 7; 
+      const margin = 20; 
+      let yPos = margin; 
+
+      // Add Noto Sans Devanagari font for Hindi text
+      // Ensure the notoSansDevanagariBase64 variable is populated with the correct Base64 string.
+      if (notoSansDevanagariBase64) {
+        doc.addFileToVFS('NotoSansDevanagari-Regular.ttf', notoSansDevanagariBase64);
+        doc.addFont('NotoSansDevanagari-Regular.ttf', 'NotoSansDevanagari', 'normal');
+      } else {
+        console.warn("Noto Sans Devanagari font Base64 data is missing. Hindi text may not render correctly in PDF.");
+      }
+      const defaultFont = 'helvetica'; // jsPDF's default font
 
       // Page Title
+      doc.setFont(defaultFont, 'normal');
       doc.setFontSize(18);
       doc.text(pageTitle, pageWidth / 2, yPos, { align: 'center' });
       yPos += lineHeight * 2; 
 
-      // Disclaimer for Hindi characters
-      doc.setFontSize(10);
-      doc.setTextColor(100); // Gray color for the note
-      const hindiNote = "Note: Hindi characters may not display correctly in this PDF due to standard font limitations. For accurate rendering, a system with Devanagari font support or PDF software with embedded font capabilities is recommended.";
-      const splitHindiNote = doc.splitTextToSize(hindiNote, pageWidth - margin * 2);
-      splitHindiNote.forEach(line => {
-        if (yPos + lineHeight > pageHeight - margin) {
-            doc.addPage();
-            yPos = margin;
-        }
-        doc.text(line, margin, yPos);
-        yPos += lineHeight;
-      });
-      yPos += lineHeight; // Extra space after the note
-      doc.setTextColor(0); // Reset text color to black
+      // Disclaimer for Hindi characters if font is not loaded
+      if (!notoSansDevanagariBase64) {
+        doc.setFont(defaultFont, 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(100); 
+        const hindiNote = "Note: Hindi font is not loaded. Hindi characters may not display correctly in this PDF. Please ensure the Noto Sans Devanagari font is correctly configured.";
+        const splitHindiNote = doc.splitTextToSize(hindiNote, pageWidth - margin * 2);
+        splitHindiNote.forEach(line => {
+          if (yPos + lineHeight > pageHeight - margin) {
+              doc.addPage();
+              yPos = margin;
+          }
+          doc.text(line, margin, yPos);
+          yPos += lineHeight;
+        });
+        yPos += lineHeight; 
+        doc.setTextColor(0); 
+      }
 
-      doc.setFontSize(12); // Reset to content font size
+      doc.setFontSize(12);
 
       wordDataList.forEach((data) => {
-        const linesForEntry: Array<{ text: string, fontStyle: 'normal' | 'bold' }> = [];
+        const entryStartYPos = yPos;
+        let tempYPos = yPos;
+
+        // Calculate height of the current entry block
+        let blockHeight = 0;
         
         // Word (Bold)
+        doc.setFont(defaultFont, 'bold');
         const wordLines = doc.splitTextToSize(data.word, pageWidth - margin * 2);
-        wordLines.forEach(line => linesForEntry.push({ text: line, fontStyle: 'bold'}));
+        blockHeight += wordLines.length * lineHeight;
 
         // Sentence
+        doc.setFont(defaultFont, 'normal');
         const sentenceLines = doc.splitTextToSize(`Sentence: ${data.sentence}`, pageWidth - margin * 2);
-        sentenceLines.forEach(line => linesForEntry.push({ text: line, fontStyle: 'normal'}));
+        blockHeight += sentenceLines.length * lineHeight;
         
         // Hindi Meaning
-        // jsPDF has limited support for Unicode characters like Hindi without embedding custom fonts.
-        // The text below might not render correctly.
+        doc.setFont(notoSansDevanagariBase64 ? 'NotoSansDevanagari' : defaultFont, 'normal');
         const hindiMeaningLines = doc.splitTextToSize(`Hindi Meaning: ${data.hindiMeaning}`, pageWidth - margin * 2);
-        hindiMeaningLines.forEach(line => linesForEntry.push({ text: line, fontStyle: 'normal'}));
+        blockHeight += hindiMeaningLines.length * lineHeight;
 
         // Pronunciation
+        doc.setFont(defaultFont, 'normal');
         const pronunciationLines = doc.splitTextToSize(`Pronunciation: ${data.pronunciation}`, pageWidth - margin * 2);
-        pronunciationLines.forEach(line => linesForEntry.push({ text: line, fontStyle: 'normal'}));
+        blockHeight += pronunciationLines.length * lineHeight;
         
-        // Calculate height of the current entry block
-        const blockHeight = (linesForEntry.length * lineHeight) + lineHeight; // Add extra lineheight for spacing after block
+        blockHeight += lineHeight; // Spacing after the entry
 
         // Check if block fits on current page, if not, add a new page
-        if (yPos + blockHeight > pageHeight - margin) {
+        if (tempYPos + blockHeight > pageHeight - margin && tempYPos !== margin) { // also ensure it's not the first item on a fresh page
           doc.addPage();
-          yPos = margin; // Reset Y position for new page
-          // Optional: Add continuation title to new page
+          yPos = margin; 
+          doc.setFont(defaultFont, 'normal');
           doc.setFontSize(18);
           doc.text(pageTitle + " (cont.)", pageWidth / 2, yPos, { align: 'center' });
           yPos += lineHeight * 2;
           doc.setFontSize(12);
         }
 
-        // Draw the lines for the current entry
-        linesForEntry.forEach(lineInfo => {
-          doc.setFont(undefined, lineInfo.fontStyle); // Set font style for the line
-          doc.text(lineInfo.text, margin, yPos);
+        // Draw Word
+        doc.setFont(defaultFont, 'bold');
+        wordLines.forEach(line => {
+          doc.text(line, margin, yPos);
           yPos += lineHeight;
         });
+
+        // Draw Sentence
+        doc.setFont(defaultFont, 'normal');
+        sentenceLines.forEach(line => {
+          doc.text(line, margin, yPos);
+          yPos += lineHeight;
+        });
+        
+        // Draw Hindi Meaning
+        doc.setFont(notoSansDevanagariBase64 ? 'NotoSansDevanagari' : defaultFont, 'normal');
+        hindiMeaningLines.forEach(line => {
+          doc.text(line, margin, yPos);
+          yPos += lineHeight;
+        });
+        doc.setFont(defaultFont, 'normal'); // Reset to default font
+
+        // Draw Pronunciation
+        pronunciationLines.forEach(line => {
+          doc.text(line, margin, yPos);
+          yPos += lineHeight;
+        });
+        
         yPos += lineHeight; // Add spacing after the entry
       });
 
       doc.save("lexidaily_words.pdf");
       toast({
         title: "PDF Exported",
-        description: "Your words have been exported. Note: Hindi characters may not display correctly without appropriate font support.",
+        description: `Your words have been exported. ${!notoSansDevanagariBase64 ? "Hindi characters may not display correctly as the font is not loaded." : "Hindi characters should display correctly."}`,
       });
     } catch (error) {
       console.error("Failed to generate PDF:", error);
@@ -124,4 +171,3 @@ export default function PageControls({ wordDataList, pageTitle }: PageControlsPr
     </div>
   );
 }
-
