@@ -1,3 +1,4 @@
+
 "use client"; 
 
 import * as React from "react";
@@ -61,7 +62,48 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
     const shareData = {
       title: `LexiDaily Word: ${word}`,
       text: `Word: ${word}\nExample: ${exampleSentence}\nHindi Meaning: ${hindiMeaning}\nPronunciation: ${pronunciation}\n\nLearn more with LexiDaily!`,
-      // url: typeof window !== 'undefined' ? window.location.href : undefined, // Optional: Share the current page URL
+    };
+
+    const fallbackCopyToClipboard = async (shareErrorName?: string) => {
+      try {
+        if (typeof navigator.clipboard?.writeText === 'function') {
+          await navigator.clipboard.writeText(shareData.text);
+          if (shareErrorName) { 
+            toast({
+              title: shareErrorName === 'NotAllowedError' ? "Sharing Permission Denied" : "Sharing Failed",
+              description: "Word details have been copied to your clipboard instead.",
+            });
+          } else { 
+            toast({
+              title: "Copied to clipboard!",
+              description: "Sharing is not supported, so the word details have been copied.",
+            });
+          }
+        } else {
+          let descriptionText = "";
+          if (shareErrorName) {
+            if (shareErrorName === 'NotAllowedError') {
+              descriptionText = "Sharing permission was denied. Copy to clipboard is also not available in your browser.";
+            } else {
+              descriptionText = "Sharing failed. Copy to clipboard is also not available in your browser.";
+            }
+          } else {
+            descriptionText = "Web Share API and Clipboard API are not available in your browser.";
+          }
+          toast({
+            title: "Action Unavailable",
+            description: descriptionText,
+            variant: "destructive",
+          });
+        }
+      } catch (copyError) {
+        console.error("Error copying to clipboard:", copyError);
+        toast({
+          title: "Copy Failed",
+          description: "Could not copy word details to clipboard.",
+          variant: "destructive",
+        });
+      }
     };
 
     if (typeof navigator.share === 'function') {
@@ -73,39 +115,16 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
         });
       } catch (error) {
         console.error("Error sharing:", error);
-        // Only show toast if it's not an AbortError (user cancelled share dialog)
-        if ((error as DOMException)?.name !== 'AbortError') {
-          toast({
-            title: "Sharing failed",
-            description: "Could not share the word at this time.",
-            variant: "destructive",
-          });
+        const domError = error as DOMException;
+        // If user cancelled the share dialog (AbortError), do nothing.
+        // Otherwise, attempt to fall back to copying to clipboard.
+        if (domError?.name !== 'AbortError') {
+          await fallbackCopyToClipboard(domError?.name);
         }
       }
     } else {
-      // Fallback for browsers that don't support Web Share API: copy to clipboard
-      try {
-        if (typeof navigator.clipboard?.writeText === 'function') {
-          await navigator.clipboard.writeText(shareData.text);
-          toast({
-            title: "Copied to clipboard!",
-            description: "Sharing is not supported, so the word details have been copied to your clipboard.",
-          });
-        } else {
-          toast({
-            title: "Sharing not supported",
-            description: "Web Share API and Clipboard API are not available in your browser.",
-            variant: "destructive",
-          });
-        }
-      } catch (err) {
-        console.error("Error copying to clipboard:", err);
-        toast({
-          title: "Copy failed",
-          description: "Could not copy word details to clipboard.",
-          variant: "destructive",
-        });
-      }
+      // navigator.share is not available, directly use fallback to copy to clipboard
+      await fallbackCopyToClipboard();
     }
   };
 
@@ -115,7 +134,7 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
       <CardHeader className="p-6 bg-card">
         <div className="flex items-center justify-between">
           <CardTitle className="text-3xl font-bold capitalize text-primary">{word}</CardTitle>
-          <div className="flex items-center space-x-1 sm:space-x-2"> {/* Adjusted spacing for potentially smaller screens */}
+          <div className="flex items-center space-x-1 sm:space-x-2">
             <Button 
               variant="ghost" 
               size="icon" 
