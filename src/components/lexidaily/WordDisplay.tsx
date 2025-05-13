@@ -1,3 +1,4 @@
+
 "use client"; 
 
 import * as React from "react";
@@ -24,6 +25,8 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
       utterance.lang = 'en-US'; 
       
       const voices = window.speechSynthesis.getVoices();
+      // Ensure voices are loaded. If not, it might use a default voice.
+      // Some browsers load voices asynchronously.
       const englishVoice = voices.find(voice => voice.lang.startsWith('en-'));
       if (englishVoice) {
         utterance.voice = englishVoice;
@@ -40,20 +43,22 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
   };
 
   React.useEffect(() => {
+    // Pre-load voices if necessary, or handle onvoiceschanged event
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       const loadVoices = () => {
         const voices = window.speechSynthesis.getVoices();
-        if (voices.length === 0) {
-          // Ensure onvoiceschanged is attached only once or handled correctly
-          const voiceChangeHandler = () => {
-            // Voices loaded, can remove listener if desired, or just let it be.
-            // For simplicity, we'll leave it, but in complex apps, manage listeners carefully.
+        if (voices.length === 0 && window.speechSynthesis.onvoiceschanged !== undefined) {
+          // This event listener will be called when voices are loaded
+          window.speechSynthesis.onvoiceschanged = () => {
+            // Voices loaded, no specific action needed here other than allowing future `getVoices()` calls to succeed
+            // Potentially, you could re-trigger something if needed, but for this simple case, 
+            // the next call to handleSpeak will benefit.
           };
-          window.speechSynthesis.onvoiceschanged = voiceChangeHandler;
         }
       };
       loadVoices();
       
+      // Cleanup: remove the event listener when the component unmounts
       return () => {
         if (window.speechSynthesis) {
             window.speechSynthesis.onvoiceschanged = null;
@@ -62,55 +67,76 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
     }
   }, []);
 
+  const fallbackCopyToClipboard = async (shareErrorName?: string) => {
+    const shareData = { // Define shareData here as it's used in this scope
+      title: `LexiDaily Word: ${word}`,
+      text: `Word: ${word}\nExample: ${exampleSentence}\nHindi Meaning: ${hindiMeaning}\nPronunciation: ${pronunciation}\n\nLearn more with LexiDaily!`,
+    };
+
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(shareData.text);
+        if (shareErrorName) { 
+          toast({
+            title: shareErrorName === 'NotAllowedError' ? "Sharing Permission Denied" : "Sharing Failed",
+            description: "Word details have been copied to your clipboard instead.",
+          });
+        } else { 
+          toast({
+            title: "Copied to clipboard!",
+            description: "Sharing is not supported, so the word details have been copied.",
+          });
+        }
+      } else {
+        let descriptionText = "";
+        if (shareErrorName) {
+          if (shareErrorName === 'NotAllowedError') {
+            descriptionText = "Sharing permission was denied. Copy to clipboard is also not available in your browser. Please try copying manually.";
+          } else {
+            descriptionText = "Sharing failed. Copy to clipboard is also not available in your browser. Please try copying manually.";
+          }
+        } else {
+          descriptionText = "Web Share API and Clipboard API are not available in your browser. Please try copying manually.";
+        }
+        toast({
+          title: "Action Unavailable",
+          description: descriptionText,
+          variant: "destructive",
+        });
+      }
+    } catch (copyError: any) {
+      console.error("Error copying to clipboard:", copyError);
+      let errorTitle = "Copy Failed";
+      let errorDescription = "Could not copy word details to clipboard. Please try copying manually.";
+
+      if (copyError instanceof DOMException) {
+        if (copyError.message && copyError.message.toLowerCase().includes("permissions policy")) {
+          errorTitle = "Clipboard Blocked by Policy";
+          errorDescription = "Clipboard access is blocked by your browser's permissions policy. This often occurs on non-secure (HTTP) pages or due to specific site configurations. Please try copying manually.";
+        } else if (copyError.name === 'NotAllowedError') {
+          errorTitle = "Clipboard Access Denied";
+          errorDescription = "Permission to access the clipboard was denied by you or your browser. Please check your browser settings or try copying manually.";
+        } else if (copyError.name === 'SecurityError') {
+           errorTitle = "Clipboard Security Error";
+           errorDescription = "Clipboard access is blocked due to a security issue (e.g., page not served over HTTPS). Please try copying manually.";
+        }
+      }
+      
+      toast({
+        title: errorTitle,
+        description: errorDescription,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleShare = async () => {
     const shareData = {
       title: `LexiDaily Word: ${word}`,
       text: `Word: ${word}\nExample: ${exampleSentence}\nHindi Meaning: ${hindiMeaning}\nPronunciation: ${pronunciation}\n\nLearn more with LexiDaily!`,
     };
 
-    const fallbackCopyToClipboard = async (shareErrorName?: string) => {
-      try {
-        if (typeof navigator.clipboard?.writeText === 'function') {
-          await navigator.clipboard.writeText(shareData.text);
-          if (shareErrorName) { 
-            toast({
-              title: shareErrorName === 'NotAllowedError' ? "Sharing Permission Denied" : "Sharing Failed",
-              description: "Word details have been copied to your clipboard instead.",
-            });
-          } else { 
-            toast({
-              title: "Copied to clipboard!",
-              description: "Sharing is not supported, so the word details have been copied.",
-            });
-          }
-        } else {
-          let descriptionText = "";
-          if (shareErrorName) {
-            if (shareErrorName === 'NotAllowedError') {
-              descriptionText = "Sharing permission was denied. Copy to clipboard is also not available in your browser.";
-            } else {
-              descriptionText = "Sharing failed. Copy to clipboard is also not available in your browser.";
-            }
-          } else {
-            descriptionText = "Web Share API and Clipboard API are not available in your browser.";
-          }
-          toast({
-            title: "Action Unavailable",
-            description: descriptionText,
-            variant: "destructive",
-          });
-        }
-      } catch (copyError) {
-        console.error("Error copying to clipboard:", copyError);
-        toast({
-          title: "Copy Failed",
-          description: "Could not copy word details to clipboard.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    if (typeof navigator.share === 'function') {
+    if (navigator.share) {
       try {
         await navigator.share(shareData);
         toast({
@@ -119,21 +145,16 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
         });
       } catch (error) {
         const domError = error as DOMException;
-        // If user cancelled the share dialog (AbortError), do nothing.
         if (domError?.name === 'AbortError') {
-          // User cancelled share. No action needed from our side.
+          // User cancelled share. No action needed.
         } else {
-          // For NotAllowedError (permission denied) or other errors, attempt fallback.
-          // Log only if it's an unexpected error, not a standard permission denial or cancellation.
-          if (domError?.name !== 'NotAllowedError') {
+          if (domError?.name !== 'NotAllowedError') { 
             console.error("Error sharing via navigator.share:", error);
           }
-          // Always attempt fallback if not AbortError.
           await fallbackCopyToClipboard(domError?.name);
         }
       }
     } else {
-      // navigator.share is not available, directly use fallback to copy to clipboard
       await fallbackCopyToClipboard();
     }
   };
