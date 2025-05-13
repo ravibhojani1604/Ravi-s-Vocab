@@ -98,7 +98,9 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
       }
     } catch (err) {
       let message = "Could not copy content. Please try manually.";
-      if (err instanceof Error) {
+      if (err instanceof Error && err.name === "NotAllowedError") {
+         message = "Clipboard write permission denied. Please enable it in your browser settings or copy manually.";
+      } else if (err instanceof Error) {
         message = `Failed to copy: ${err.message}. Try manually.`;
       }
       toast({
@@ -140,9 +142,9 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
 
   return (
     <Card className="w-full shadow-lg rounded-xl overflow-hidden bg-card hover:shadow-xl transition-shadow duration-300 ease-in-out">
-      <CardHeader className="p-6 bg-card">
+      <CardHeader className="p-4 sm:p-6 bg-card">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-3xl font-bold capitalize text-primary">{word}</CardTitle>
+          <CardTitle className="text-2xl sm:text-3xl font-bold capitalize text-primary">{word}</CardTitle>
           <div className="flex items-center space-x-1 sm:space-x-2">
              <Button 
               variant="ghost" 
@@ -165,33 +167,33 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronu
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-6 pt-0 space-y-4">
+      <CardContent className="p-4 sm:p-6 pt-0 space-y-3 sm:space-y-4">
         <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">Example Sentence:</h3>
-            <p className="text-lg text-foreground leading-relaxed">
+            <h3 className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">Example Sentence:</h3>
+            <p className="text-base sm:text-lg text-foreground leading-relaxed">
             {exampleSentence || "No example sentence available for this word."}
             </p>
         </div>
         
         {pronunciation && (
-             <div className="pt-2">
-                <h3 className="text-sm font-medium text-muted-foreground mb-1 flex items-center">
-                    <Volume2 className="h-4 w-4 mr-2 text-accent" aria-hidden="true" />
+             <div className="pt-1 sm:pt-2">
+                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 flex items-center">
+                    <Volume2 className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-accent" aria-hidden="true" />
                     Pronunciation:
                 </h3>
-                <p className="text-lg text-foreground font-medium leading-relaxed">
+                <p className="text-base sm:text-lg text-foreground font-medium leading-relaxed">
                     {pronunciation}
                 </p>
             </div>
         )}
 
         {hindiMeaning && (
-            <div className="pt-2">
-                <h3 className="text-sm font-medium text-muted-foreground mb-1 flex items-center">
-                    <Languages className="h-4 w-4 mr-2 text-secondary" aria-hidden="true" />
+            <div className="pt-1 sm:pt-2">
+                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 flex items-center">
+                    <Languages className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-secondary" aria-hidden="true" />
                     Hindi Meaning:
                 </h3>
-                <p className="text-lg text-secondary-foreground font-semibold leading-relaxed">
+                <p className="text-base sm:text-lg text-secondary-foreground font-semibold leading-relaxed">
                     {hindiMeaning}
                 </p>
             </div>

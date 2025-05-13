@@ -98,12 +98,12 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col items-center min-h-screen bg-background text-foreground selection:bg-accent selection:text-accent-foreground">
       <div className="w-full p-4 sm:p-8 flex flex-col items-center">
-        <header className="w-full max-w-3xl mt-8 mb-12 text-center">
+        <header className="w-full max-w-3xl mt-8 mb-10 sm:mb-12 text-center">
           <div className="flex items-center justify-center mb-4">
-            <BookOpenText className="h-12 w-12 text-primary mr-3" aria-hidden="true" />
-            <h1 className="text-5xl font-extrabold tracking-tight text-primary">Ravi's Vocab</h1>
+            <BookOpenText className="h-10 w-10 sm:h-12 sm:w-12 text-primary mr-2 sm:mr-3" aria-hidden="true" />
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-primary">Ravi's Vocab</h1>
           </div>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-lg sm:text-xl text-muted-foreground px-2">
             Expand your vocabulary, one day at a time, with Hindi meanings and pronunciations.
           </p>
         </header>
@@ -112,8 +112,8 @@ export default async function HomePage() {
           <PageControls wordDataList={wordDataList} pageTitle="Ravi's Vocab - Today's Words" />
         )}
 
-        <main className="w-full max-w-xl space-y-6">
-          <h2 className="text-3xl font-semibold text-center text-foreground mb-8">
+        <main className="w-full max-w-xl space-y-6 px-2 sm:px-0">
+          <h2 className="text-2xl sm:text-3xl font-semibold text-center text-foreground mb-6 sm:mb-8">
             Today's Words
           </h2>
           {wordDataList.length > 0 ? (
@@ -129,17 +129,17 @@ export default async function HomePage() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center p-10 bg-card rounded-lg shadow-md">
-                <BookOpenText className="h-16 w-16 text-muted-foreground mb-4" />
-              <p className="text-center text-muted-foreground text-lg">
+            <div className="flex flex-col items-center justify-center p-6 sm:p-10 bg-card rounded-lg shadow-md">
+                <BookOpenText className="h-14 w-14 sm:h-16 sm:w-16 text-muted-foreground mb-4" />
+              <p className="text-center text-muted-foreground text-md sm:text-lg">
                 No new words for today. Please check back tomorrow!
               </p>
             </div>
           )}
         </main>
 
-        <footer className="w-full max-w-3xl mt-16 pt-8 border-t border-border text-center">
-          <p className="text-sm text-muted-foreground">
+        <footer className="w-full max-w-3xl mt-12 sm:mt-16 pt-6 sm:pt-8 border-t border-border text-center">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} Ravi's Vocab. AI-enhanced learning.
           </p>
         </footer>
