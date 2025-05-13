@@ -1,20 +1,22 @@
 import WordDisplay from '@/components/lexidaily/WordDisplay';
 import { generateExampleSentences } from '@/ai/flows/generate-example-sentences';
-import { BookOpenText } from 'lucide-react';
+import { BookOpenText, Languages } from 'lucide-react';
 
 // Mocked list of daily words. In a real app, this would come from an external API.
-const MOCK_DAILY_WORDS: string[] = ["ephemeral", "ubiquitous", "serendipity", "mellifluous", "labyrinthine", "eloquent", "pernicious"];
+const MOCK_DAILY_WORDS: string[] = ["ephemeral", "ubiquitous", "serendipity", "mellifluous", "labyrinthine", "eloquent", "pernicious", "auspicious", "cacophony", "epiphany"];
 
 async function fetchDailyWords(): Promise<string[]> {
   // Simulate an API call to fetch daily words
   console.log("Fetching daily words...");
   await new Promise(resolve => setTimeout(resolve, 200)); // Simulate a short delay
-  return MOCK_DAILY_WORDS;
+  // Ensure at least 10 words are returned
+  return MOCK_DAILY_WORDS.slice(0, Math.max(10, MOCK_DAILY_WORDS.length));
 }
 
 interface WordData {
   word: string;
   sentence: string;
+  hindiMeaning: string;
 }
 
 export default async function HomePage() {
@@ -23,18 +25,28 @@ export default async function HomePage() {
 
   if (words.length > 0) {
     try {
-      const exampleSentencesResult = await generateExampleSentences({ words });
-      // Assuming the AI returns one sentence per word, in the same order.
-      wordDataList = words.map((word, index) => ({
-        word,
-        sentence: exampleSentencesResult.sentences[index] || "Example sentence generation is currently unavailable.",
-      }));
+      const aiResult = await generateExampleSentences({ words });
+      if (aiResult && aiResult.wordDetails && aiResult.wordDetails.length > 0) {
+        wordDataList = aiResult.wordDetails.map(detail => ({
+          word: detail.word,
+          sentence: detail.sentence || "Example sentence generation is currently unavailable.",
+          hindiMeaning: detail.hindiMeaning || "Hindi meaning not available.",
+        }));
+      } else {
+        // Fallback if AI response is not as expected
+        wordDataList = words.map(word => ({
+          word,
+          sentence: "Could not retrieve an example sentence at this time.",
+          hindiMeaning: "Hindi meaning not available.",
+        }));
+      }
     } catch (error) {
-      console.error("Error generating example sentences:", error);
-      // Fallback: Populate with words but indicate sentence generation failure.
+      console.error("Error generating example sentences and meanings:", error);
+      // Fallback: Populate with words but indicate generation failure.
       wordDataList = words.map(word => ({
         word,
         sentence: "Could not retrieve an example sentence at this time.",
+        hindiMeaning: "Hindi meaning not available.",
       }));
     }
   }
@@ -48,7 +60,7 @@ export default async function HomePage() {
             <h1 className="text-5xl font-extrabold tracking-tight text-primary">LexiDaily</h1>
           </div>
           <p className="text-xl text-muted-foreground">
-            Expand your vocabulary, one day at a time.
+            Expand your vocabulary, one day at a time, with Hindi meanings.
           </p>
         </header>
 
@@ -59,7 +71,12 @@ export default async function HomePage() {
           {wordDataList.length > 0 ? (
             <div className="space-y-6">
               {wordDataList.map((data, index) => (
-                <WordDisplay key={index} word={data.word} exampleSentence={data.sentence} />
+                <WordDisplay 
+                  key={index} 
+                  word={data.word} 
+                  exampleSentence={data.sentence}
+                  hindiMeaning={data.hindiMeaning}
+                />
               ))}
             </div>
           ) : (
