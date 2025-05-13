@@ -1,15 +1,16 @@
 "use client"; 
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Languages } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Languages, Volume2 } from "lucide-react";
 
 interface WordDisplayProps {
   word: string;
   exampleSentence: string;
   hindiMeaning: string;
+  pronunciation: string;
 }
 
-export default function WordDisplay({ word, exampleSentence, hindiMeaning }: WordDisplayProps) {
+export default function WordDisplay({ word, exampleSentence, hindiMeaning, pronunciation }: WordDisplayProps) {
   return (
     <Card className="w-full shadow-lg rounded-xl overflow-hidden bg-card hover:shadow-xl transition-shadow duration-300 ease-in-out">
       <CardHeader className="p-6 bg-card">
@@ -22,6 +23,19 @@ export default function WordDisplay({ word, exampleSentence, hindiMeaning }: Wor
             {exampleSentence || "No example sentence available for this word."}
             </p>
         </div>
+        
+        {pronunciation && (
+             <div className="pt-2">
+                <h3 className="text-sm font-medium text-muted-foreground mb-1 flex items-center">
+                    <Volume2 className="h-4 w-4 mr-2 text-accent" aria-hidden="true" />
+                    Pronunciation:
+                </h3>
+                <p className="text-lg text-foreground font-medium leading-relaxed">
+                    {pronunciation}
+                </p>
+            </div>
+        )}
+
         {hindiMeaning && (
             <div className="pt-2">
                 <h3 className="text-sm font-medium text-muted-foreground mb-1 flex items-center">

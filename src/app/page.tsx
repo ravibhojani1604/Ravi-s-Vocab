@@ -1,6 +1,6 @@
 import WordDisplay from '@/components/lexidaily/WordDisplay';
 import { generateExampleSentences } from '@/ai/flows/generate-example-sentences';
-import { BookOpenText, Languages } from 'lucide-react';
+import { BookOpenText } from 'lucide-react';
 
 // Mocked list of daily words. In a real app, this would come from an external API.
 const MOCK_DAILY_WORDS: string[] = ["ephemeral", "ubiquitous", "serendipity", "mellifluous", "labyrinthine", "eloquent", "pernicious", "auspicious", "cacophony", "epiphany"];
@@ -17,6 +17,7 @@ interface WordData {
   word: string;
   sentence: string;
   hindiMeaning: string;
+  pronunciation: string;
 }
 
 export default async function HomePage() {
@@ -31,6 +32,7 @@ export default async function HomePage() {
           word: detail.word,
           sentence: detail.sentence || "Example sentence generation is currently unavailable.",
           hindiMeaning: detail.hindiMeaning || "Hindi meaning not available.",
+          pronunciation: detail.pronunciation || "Pronunciation not available.",
         }));
       } else {
         // Fallback if AI response is not as expected
@@ -38,15 +40,17 @@ export default async function HomePage() {
           word,
           sentence: "Could not retrieve an example sentence at this time.",
           hindiMeaning: "Hindi meaning not available.",
+          pronunciation: "Pronunciation not available.",
         }));
       }
     } catch (error) {
-      console.error("Error generating example sentences and meanings:", error);
+      console.error("Error generating example sentences, meanings, and pronunciations:", error);
       // Fallback: Populate with words but indicate generation failure.
       wordDataList = words.map(word => ({
         word,
         sentence: "Could not retrieve an example sentence at this time.",
         hindiMeaning: "Hindi meaning not available.",
+        pronunciation: "Pronunciation not available.",
       }));
     }
   }
@@ -60,7 +64,7 @@ export default async function HomePage() {
             <h1 className="text-5xl font-extrabold tracking-tight text-primary">LexiDaily</h1>
           </div>
           <p className="text-xl text-muted-foreground">
-            Expand your vocabulary, one day at a time, with Hindi meanings.
+            Expand your vocabulary, one day at a time, with Hindi meanings and pronunciations.
           </p>
         </header>
 
@@ -76,6 +80,7 @@ export default async function HomePage() {
                   word={data.word} 
                   exampleSentence={data.sentence}
                   hindiMeaning={data.hindiMeaning}
+                  pronunciation={data.pronunciation}
                 />
               ))}
             </div>
